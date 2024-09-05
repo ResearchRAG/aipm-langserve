@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-"""An example that shows how to use path dependencies for authentication.
+"""一个示例，展示了如何使用路径依赖进行认证。
 
-The path dependencies are applied to all the routes added by the `add_routes`.
+路径依赖应用于 `add_routes` 添加的所有路由。
 
-To keep this example brief, we're providing a placeholder verify_token function
-that shows how to use path dependencies.
+为了简洁起见，我们提供了一个占位符 verify_token 函数，展示了如何使用路径依赖。
 
-To implement proper auth, please see the FastAPI docs:
+要实现适当的认证，请参见 FastAPI 文档：
 
-* https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-in-path-operation-decorators/
-* https://fastapi.tiangolo.com/tutorial/dependencies/
-* https://fastapi.tiangolo.com/tutorial/security/
+* https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-in-path-operation-decorators/ 
+* https://fastapi.tiangolo.com/tutorial/dependencies/ 
+* https://fastapi.tiangolo.com/tutorial/security/ 
 """  # noqa: E501
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -21,8 +20,8 @@ from langserve import add_routes
 
 
 async def verify_token(x_token: Annotated[str, Header()]) -> None:
-    """Verify the token is valid."""
-    # Replace this with your actual authentication logic
+    """验证令牌是否有效。"""
+    # 用你实际的认证逻辑替换这个
     if x_token != "secret-token":
         raise HTTPException(status_code=400, detail="X-Token header invalid")
 
@@ -31,7 +30,7 @@ app = FastAPI()
 
 
 def add_one(x: int) -> int:
-    """Add one to an integer."""
+    """给一个整数加一。"""
     return x + 1
 
 

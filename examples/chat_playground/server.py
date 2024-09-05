@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""Example of a simple chatbot that just passes current conversation
-state back and forth between server and client.
-"""
+"""一个简单的聊天机器人示例，它在服务器和客户端之间传递当前的对话状态。"""
 from typing import List, Union
 
 from fastapi import FastAPI
@@ -13,16 +11,16 @@ from langserve import add_routes
 from langserve.pydantic_v1 import BaseModel, Field
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain 服务器",
     version="1.0",
-    description="Spin up a simple api server using Langchain's Runnable interfaces",
+    description="使用 Langchain 的 Runnable 接口启动一个简单的 API 服务器",
 )
 
 
-# Declare a chain
+# 声明一个链
 prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", "You are a helpful, professional assistant named Cob."),
+        ("system", "你是一个名为 Cob 的乐于助人、专业的助理。"),
         MessagesPlaceholder(variable_name="messages"),
     ]
 )
@@ -31,11 +29,11 @@ chain = prompt | ChatAnthropic(model_name="claude-3-sonnet-20240229")
 
 
 class InputChat(BaseModel):
-    """Input for the chat endpoint."""
+    """聊天端点的输入。"""
 
     messages: List[Union[HumanMessage, AIMessage, SystemMessage]] = Field(
         ...,
-        description="The chat messages representing the current conversation.",
+        description="代表当前对话的聊天消息。",
     )
 
 

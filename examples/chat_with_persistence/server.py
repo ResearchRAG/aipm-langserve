@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-"""Example of a chat server with persistence handled on the backend.
+"""带有持久化处理的聊天服务器示例。
 
-For simplicity, we're using file storage here -- to avoid the need to set up
-a database. This is obviously not a good idea for a production environment,
-but will help us to demonstrate the RunnableWithMessageHistory interface.
+为了简化，我们在这里使用文件存储——避免设置数据库的需要。这显然不是生产环境中的好主意，
+但将帮助我们演示RunnableWithMessageHistory接口。
 
-We'll use cookies to identify the user and/or session. This will help illustrate how to
-fetch configuration from the request.
+我们将使用cookies来识别用户和/或会话。这将有助于说明如何从请求中获取配置。
 """
 import re
 from pathlib import Path
@@ -14,6 +12,8 @@ from typing import Callable, Union
 
 from fastapi import FastAPI, HTTPException
 from langchain_anthropic import ChatAnthropic
+# from langchain_ollama import ChatOllama
+# from langchain_openai import ChatOpenAI
 from langchain_community.chat_message_histories import FileChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -24,8 +24,8 @@ from langserve.pydantic_v1 import BaseModel, Field
 
 
 def _is_valid_identifier(value: str) -> bool:
-    """Check if the session ID is in a valid format."""
-    # Use a regular expression to match the allowed characters
+    """检查会话ID是否为有效格式。"""
+    # 使用正则表达式匹配允许的字符
     valid_characters = re.compile(r"^[a-zA-Z0-9-_]+$")
     return bool(valid_characters.match(value))
 
@@ -33,26 +33,26 @@ def _is_valid_identifier(value: str) -> bool:
 def create_session_factory(
     base_dir: Union[str, Path],
 ) -> Callable[[str], BaseChatMessageHistory]:
-    """Create a session ID factory that creates session IDs from a base dir.
+    """创建一个会话ID工厂，从基础目录创建会话ID。
 
-    Args:
-        base_dir: Base directory to use for storing the chat histories.
+    参数：
+        base_dir: 用于存储聊天记录的基础目录。
 
-    Returns:
-        A session ID factory that creates session IDs from a base path.
+    返回：
+        一个会话ID工厂，从基础路径创建会话ID。
     """
     base_dir_ = Path(base_dir) if isinstance(base_dir, str) else base_dir
     if not base_dir_.exists():
         base_dir_.mkdir(parents=True)
 
     def get_chat_history(session_id: str) -> FileChatMessageHistory:
-        """Get a chat history from a session ID."""
+        """从会话ID获取聊天记录。"""
         if not _is_valid_identifier(session_id):
             raise HTTPException(
                 status_code=400,
-                detail=f"Session ID `{session_id}` is not in a valid format. "
-                "Session ID must only contain alphanumeric characters, "
-                "hyphens, and underscores.",
+                detail=f"会话ID `{session_id}` 格式无效。"
+                "会话ID只能包含字母数字字符、"
+                "连字符和下划线。",
             )
         file_path = base_dir_ / f"{session_id}.json"
         return FileChatMessageHistory(str(file_path))
@@ -61,16 +61,16 @@ def create_session_factory(
 
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain服务器",
     version="1.0",
-    description="Spin up a simple api server using Langchain's Runnable interfaces",
+    description="使用Langchain的Runnable接口快速搭建一个简单的API服务器",
 )
 
 
-# Declare a chain
+# 声明一个链
 prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", "You're an assistant by the name of Bob."),
+        ("system", "你是一个名叫Bob的助手。"),
         MessagesPlaceholder(variable_name="history"),
         ("human", "{human_input}"),
     ]
@@ -80,16 +80,15 @@ chain = prompt | ChatAnthropic(model="claude-2")
 
 
 class InputChat(BaseModel):
-    """Input for the chat endpoint."""
+    """聊天端点的输入。"""
 
-    # The field extra defines a chat widget.
-    # As of 2024-02-05, this chat widget is not fully supported.
-    # It's included in documentation to show how it should be specified, but
-    # will not work until the widget is fully supported for history persistence
-    # on the backend.
+    # 字段extra定义了一个聊天小部件。
+    # 截至2024-02-05，这个聊天小部件尚未完全支持。
+    # 它被包含在文档中以展示应该如何指定，但在后端完全支持历史持久化
+    # 之前将无法工作。
     human_input: str = Field(
         ...,
-        description="The human input to the chat system.",
+        description="人类输入到聊天系统的文本。",
         extra={"widget": {"type": "chat", "input": "human_input"}},
     )
 

@@ -1,52 +1,51 @@
-# LangServe License
+# LangServe 许可协议
 
-By using the software, you agree to all of the terms and conditions below.
+通过使用本软件，您同意以下所有条款和条件。
 
-## Copyright License
+## 版权许可
 
-The licensor grants you a non-exclusive, royalty-free, worldwide, non-sublicensable, non-transferable license to use, copy, distribute, make available, and prepare derivative works of the software, in each case subject to the limitations and conditions below.
+许可方授予您一个非独占性、免版税、全球范围内、不可再许可、不可转让的许可，用于使用、复制、分发、提供、准备衍生作品以及对本软件进行操作，每个案例均须遵守以下限制和条件。
 
-## Limitations
+## 限制
 
-You may not provide the software to third parties as a hosted or managed service, where the service provides users with access to any substantial set of the features or functionality of the software.
+您不得将软件作为托管或管理服务提供给第三方，其中服务为用户提供对软件任何大量功能或功能的访问。
 
-You may not move, change, disable, or circumvent the license key functionality in the software, and you may not remove or obscure any functionality in the software that is protected by the license key.
+您不得移动、更改、禁用或绕过软件中的许可证密钥功能，您也不得移除或遮盖软件中受许可证密钥保护的任何功能。
 
-You may not alter, remove, or obscure any licensing, copyright, or other notices of the licensor in the software. Any use of the licensor’s trademarks is subject to applicable law.
+您不得更改、移除或遮盖许可方在软件中的任何许可、版权或其他通知。对许可方商标的任何使用均须遵守适用法律。
 
-## Patents
+## 专利
 
-The licensor grants you a license, under any patent claims the licensor can license, or becomes able to license, to make, have made, use, sell, offer for sale, import and have imported the software, in each case subject to the limitations and conditions in this license. This license does not cover any patent claims that you cause to be infringed by modifications or additions to the software. If you or your company make any written claim that the software infringes or contributes to infringement of any patent, your patent license for the software granted under these terms ends immediately. If your company makes such a claim, your patent license ends immediately for work on behalf of your company.
+许可方根据许可方可以许可或能够许可的任何专利索赔，授予您许可，制造、委托制造、使用、销售、提供销售、进口和委托进口软件，每个案例均须遵守本许可中的限制和条件。如果您通过修改或增加软件而引起的任何专利索赔，则本许可不包括这些专利索赔。如果您或您的公司以书面形式声称软件侵犯或有助于侵犯任何专利，那么根据这些条款授予您的软件专利许可将立即终止。如果您的公司提出此类主张，您代表公司进行的工作的专利许可将立即终止。
 
-## Notices
+## 通知
 
-You must ensure that anyone who gets a copy of any part of the software from you also gets a copy of these terms.
+您必须确保从您这里获得软件任何部分副本的任何人也获得这些条款的副本。
 
-If you modify the software, you must include in any modified copies of the software prominent notices stating that you have modified the software.
+如果您修改了软件，您必须在软件的任何修改副本中包含显著的通知，声明您已修改了软件。
 
-## No Other Rights
+## 无其他权利
 
-These terms do not imply any licenses other than those expressly granted in these terms.
+这些条款不暗示除明确授予的许可之外的任何许可。
 
-## Termination
+## 终止
 
-If you use the software in violation of these terms, such use is not licensed, and your licenses will automatically terminate. If the licensor provides you with a notice of your violation, and you cease all violation of this license no later than 30 days after you receive that notice, your licenses will be reinstated retroactively. However, if you violate these terms after such reinstatement, any additional violation of these terms will cause your licenses to terminate automatically and permanently.
+如果您违反这些条款使用软件，此类使用未获许可，您的许可将自动终止。如果许可方就您的违规行为向您发出通知，并且您在收到该通知后不超过30天内停止所有违反本许可的行为，您的许可将追溯性地恢复。然而，如果您在此类恢复后再次违反这些条款，任何对这些条款的额外违反将导致您的许可自动且永久地终止。
 
-## No Liability
+## 无责任
 
-As far as the law allows, the software comes as is, without any warranty or condition, and the licensor will not be liable to you for any damages arising out of these terms or the use or nature of the software, under any kind of legal claim.
+在法律允许的范围内，软件按原样提供，不含任何明示或暗示的保证或条件，许可方不对因这些条款或软件的使用或性质而产生的任何损害向您承担责任，无论任何类型的法律主张。
 
-## Definitions
+## 定义
 
-The licensor is the entity offering these terms, and the software is the software the licensor makes available under these terms, including any portion of it.
+许可方是提供这些条款的实体，软件是许可方根据这些条款提供的软件，包括其任何部分。
 
-you refers to the individual or entity agreeing to these terms.
+“您”指同意这些条款的个人或实体。
 
-your company is any legal entity, sole proprietorship, or other kind of organization that you work for, plus all organizations that have control over, are under the control of, or are under common control with that organization. control means ownership of substantially all the assets of an entity, or the power to direct its management and policies by vote, contract, or otherwise. Control can be direct or indirect.
+“您的公司”是指您为之工作的任何法律实体、独资企业或其他类型的组织，以及所有对该组织具有控制权的组织、受该组织控制或与之共同受控的组织。控制是指对一个实体的几乎所有资产的所有权，或通过投票、合同或其他方式指导其管理和政策的权力。控制可以是直接的或间接的。
 
-your licenses are all the licenses granted to you for the software under these terms.
+“您的许可”是指根据这些条款授予您用于软件的所有许可。
 
-use means anything you do with the software requiring one of your licenses.
+“使用”指您需要您的许可的软件的任何操作。
 
-trademark means trademarks, service marks, and similar rights.
-
+“商标”指商标、服务标记和类似权利。

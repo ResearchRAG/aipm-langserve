@@ -1,48 +1,41 @@
 #!/usr/bin/env python
-"""Example LangChain server that shows how to customize streaming for an agent.
+"""示例 LangChain 服务器，展示如何为代理自定义流式传输。
 
-Example uses a RunnableLambda that:
+示例使用 RunnableLambda 执行以下操作：
 
-1) Uses the agent's astream events method to create a custom streaming API endpoint.
-2) Instantiates an agent with custom tools (based on the user request).
+1) 使用代理的 astream 事件方法创建自定义流式 API 端点。
+2) 根据用户请求实例化具有自定义工具的代理。
 
-In this example, we kept things simple and are outputting strings to the client
-with all the intermediate steps of the agent. This is just for demonstration
-purposes, and usually you would want to return more structured output in the form
-of a dictionary.
+在这个例子中，我们保持了简单，并输出了代理的所有中间步骤的字符串给客户端。这只是为了演示目的，
+通常您会希望以字典形式返回更结构化的输出。
 
-To add history to the agent you can use RunnableWithHistory. Please see the
-other examples in LangServe for how to use RunnableWithHistory to store history
-on the server side.
+要为代理添加历史记录，您可以使用 RunnableWithHistory。请参见 LangServe 中的其他示例，
+了解如何使用 RunnableWithHistory 在服务器端存储历史记录。
 
-Alternatively, you can keep track of history on the client side and send it to the
-server with each request. For that to work, you will definitely want to modify the
-streaming output to yield dictionaries with structured output, so it's easy
-to determine what the final agent output was on the client side.
+或者，您可以在客户端跟踪历史记录，并在每个请求中将其发送到服务器。要使其工作，
+您肯定希望修改流式输出以产生带有结构化输出的字典，这样在客户端就很容易确定代理的最终输出是什么。
 
-Customize the streaming output to your use case!
+根据用例自定义流式输出！
 
-Note that we configure the agent using the `tools` field in the input rather
-than using configurable fields. Using custom runnables and configurable fields
-is another option to customize the agent. 
+请注意，我们使用输入中的 `tools` 字段配置代理，而不是使用可配置字段。使用自定义可运行项和可配置字段
+是另一种定制代理的选项。
 
-Please see configurable_agent_executor: https://github.com/langchain-ai/langserve/blob/main/examples/configurable_agent_executor/server.py
-for an example that uses a custom runnable with configurable fields.
+请参见 configurable_agent_executor: https://github.com/langchain-ai/langserve/blob/main/examples/configurable_agent_executor/server.py 
+了解使用具有可配置字段的自定义可运行项的示例。
 
-Relevant LangChain documentation:
+相关 LangChain 文档：
 
-* Creating a custom agent: https://python.langchain.com/docs/modules/agents/how_to/custom_agent
-* Streaming with agents: https://python.langchain.com/docs/modules/agents/how_to/streaming#custom-streaming-with-events
-* General streaming documentation: https://python.langchain.com/docs/expression_language/streaming
-* Message History: https://python.langchain.com/docs/expression_language/how_to/message_history
+* 创建自定义代理：https://python.langchain.com/docs/modules/agents/how_to/custom_agent 
+* 使用代理进行流式传输：https://python.langchain.com/docs/modules/agents/how_to/streaming#custom-streaming-with-events 
+* 通用流式文档：https://python.langchain.com/docs/expression_language/streaming 
+* 消息历史记录：https://python.langchain.com/docs/expression_language/how_to/message_history 
 
-**ATTENTION**
-1. This example does not truncate message history, so it will crash if you
-   send too many messages (exceed token length).
-2. The playground at the moment does not render agent output well! If you want to
-   use the playground you need to customize it's output server side using astream
-   events by wrapping it within another runnable.
-3. See the client notebook to see how .stream() behaves!
+**注意**
+1. 此示例不会截断消息历史记录，因此如果您发送了太多消息（超过令牌长度），
+   它将会崩溃。
+2. 目前的游乐场无法很好地呈现代理输出！如果您想使用游乐场，您需要通过在另一个可运行项中包装 astream
+   事件来自定义其服务器端输出。
+3. 请参见客户端笔记本，了解 .stream() 的行为！
 """  # noqa: E501
 from typing import Any, AsyncIterator, List, Literal
 
@@ -61,21 +54,23 @@ from langchain_openai import ChatOpenAI
 from langserve import add_routes
 from langserve.pydantic_v1 import BaseModel
 
+import os
+
 prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are very powerful assistant, but bad at calculating lengths of words. "
-            "Talk with the user as normal. "
-            "If they ask you to calculate the length of a word, use a tool",
+            "你是一个非常强大的助手，但不擅长计算单词的长度。 "
+            "像平常一样与用户交谈。 "
+            "如果他们要求你计算单词的长度，请使用工具",
         ),
-        # Please note the ordering of the fields in the prompt!
-        # The correct ordering is:
-        # 1. user - the user's current input
-        # 2. agent_scratchpad - the agent's working space for thinking and
-        #    invoking tools to respond to the user's input.
-        # If you change the ordering, the agent will not work correctly since
-        # the messages will be shown to the underlying LLM in the wrong order.
+        # 请注意提示中字段的顺序！
+        # 正确的顺序是：
+        # 1. user - 用户的当前输入
+        # 2. agent_scratchpad - 代理的工作空间，用于思考和
+        #    调用工具以回应用户的输入。
+        # 如果您更改了顺序，代理将无法正确工作，因为
+        # 消息将按错误的顺序显示给底层 LLM。
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ]
@@ -84,24 +79,28 @@ prompt = ChatPromptTemplate.from_messages(
 
 @tool
 def word_length(word: str) -> int:
-    """Returns a counter word"""
+    """返回计数器单词"""
     return len(word)
 
 
 @tool
 def favorite_animal(name: str) -> str:
-    """Get the favorite animal of the person with the given name"""
+    """获取给定姓名的人最喜欢的动物"""
     if name.lower().strip() == "eugene":
         return "cat"
     return "dog"
 
 
-# We need to set streaming=True on the LLM to support streaming individual tokens.
-# Tokens will be available when using the stream_log / stream events endpoints,
-# but not when using the stream endpoint since the stream implementation for agent
-# streams action observation pairs not individual tokens.
-# See the client notebook that shows how to use the stream events endpoint.
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, streaming=True)
+# 我们需要在 LLM 上设置 streaming=True 以支持流式传输单个令牌。
+# 当使用 stream_log / stream 事件端点时，令牌将可用，
+# 但当使用 stream 端点时不会，因为代理的流实现是流式传输动作观察对，而不是单个令牌。
+# 请参见客户端笔记本，了解如何使用 stream 事件端点。
+# llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, streaming=True)
+llm = ChatOpenAI(
+    api_key="我的API密钥",
+    base_url="https://我的基准URL/v1",      
+    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+)
 
 TOOL_MAPPING = {
     "word_length": word_length,
@@ -111,12 +110,12 @@ KnownTool = Literal["word_length", "favorite_animal"]
 
 
 def _create_agent_with_tools(requested_tools: List[KnownTool]) -> AgentExecutor:
-    """Create an agent with custom tools."""
+    """创建具有自定义工具的代理。"""
     tools = []
 
     for requested_tool in requested_tools:
         if requested_tool not in TOOL_MAPPING:
-            raise ValueError(f"Unknown tool: {requested_tool}")
+            raise ValueError(f"未知工具: {requested_tool}")
         tools.append(TOOL_MAPPING[requested_tool])
 
     if tools:
@@ -144,38 +143,34 @@ def _create_agent_with_tools(requested_tools: List[KnownTool]) -> AgentExecutor:
 
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain 服务器",
     version="1.0",
-    description="Spin up a simple api server using LangChain's Runnable interfaces",
+    description="使用 LangChain 的 Runnable 接口启动一个简单的 API 服务器",
 )
 
 
-# We need to add these input/output schemas because the current AgentExecutor
-# is lacking in schemas.
+# 我们需要添加这些输入/输出模式，因为当前的 AgentExecutor
+# 在模式方面有所欠缺。
 class Input(BaseModel):
     input: str
     tools: List[KnownTool]
 
 
 async def custom_stream(input: Input) -> AsyncIterator[str]:
-    """A custom runnable that can stream content.
+    """一个可以流式传输内容的自定义可运行项。
 
-    Args:
-        input: The input to the agent. See the Input model for more details.
+    参数：
+        input: 代理的输入。有关详细信息，请参见 Input 模型。
 
-    Yields:
-        strings that are streamed to the client.
+    产生：
+        流式传输到客户端的字符串。
 
+    为了简单起见，选择了字符串，但您可以自由地根据用例进行调整。
 
-    Strings were chosen for simplicity, feel free to adapt to your use case.
+    您几乎肯定希望以字典形式返回更结构化的输出，这样可以很容易地确定代理在做什么，无需解析输出。
 
-    You will almost certainly want to return more structured output in the form
-    of a dictionary, so it's easy to determine what the agent is doing without
-    parsing the output.
-
-    Before creating a custom streaming API, you should consider if you can use
-    the existing astream events API and customize the output on the client side
-    (potentially less overall work both server and client side).
+    在创建自定义流式 API 之前，您应该考虑是否可以使用现有的 astream 事件 API 并在客户端自定义输出
+    （可能在服务器和客户端方面的总体工作较少）。
     """
     agent_executor = _create_agent_with_tools(input["tools"])
     async for event in agent_executor.astream_events(
@@ -188,42 +183,42 @@ async def custom_stream(input: Input) -> AsyncIterator[str]:
         if kind == "on_chain_start":
             if (
                 event["name"] == "agent"
-            ):  # matches `.with_config({"run_name": "Agent"})` in agent_executor
+            ):  # 匹配 agent_executor 中的 `.with_config({"run_name": "Agent"})`
                 yield "\n"
                 yield (
-                    f"Starting agent: {event['name']} "
-                    f"with input: {event['data'].get('input')}"
+                    f"启动代理: {event['name']} "
+                    f"输入: {event['data'].get('input')}"
                 )
                 yield "\n"
         elif kind == "on_chain_end":
             if (
                 event["name"] == "agent"
-            ):  # matches `.with_config({"run_name": "Agent"})` in agent_executor
+            ):  # 匹配 agent_executor 中的 `.with_config({"run_name": "Agent"})`
                 yield "\n"
                 yield (
-                    f"Done agent: {event['name']} "
-                    f"with output: {event['data'].get('output')['output']}"
+                    f"完成代理: {event['name']} "
+                    f"输出: {event['data'].get('output')['output']}"
                 )
                 yield "\n"
         if kind == "on_chat_model_stream":
             content = event["data"]["chunk"].content
             if content:
-                # Empty content in the context of OpenAI means
-                # that the model is asking for a tool to be invoked.
-                # So we only print non-empty content
+                # 在 OpenAI 的上下文中，空内容意味着
+                # 模型要求调用工具。
+                # 所以我们只打印非空内容
                 yield content
         elif kind == "on_tool_start":
             yield "\n"
             yield (
-                f"Starting tool: {event['name']} "
-                f"with inputs: {event['data'].get('input')}"
+                f"启动工具: {event['name']} "
+                f"输入: {event['data'].get('input')}"
             )
             yield "\n"
         elif kind == "on_tool_end":
             yield "\n"
             yield (
-                f"Done tool: {event['name']} "
-                f"with output: {event['data'].get('output')}"
+                f"完成工具: {event['name']} "
+                f"输出: {event['data'].get('output')}"
             )
             yield "\n"
 
@@ -232,7 +227,7 @@ class Output(BaseModel):
     output: Any
 
 
-# Adds routes to the app for using the chain under:
+# 为以下内容向应用程序添加路由：
 # /invoke
 # /batch
 # /stream

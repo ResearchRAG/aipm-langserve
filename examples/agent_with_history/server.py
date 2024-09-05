@@ -1,27 +1,26 @@
 #!/usr/bin/env python
-"""Example LangChain server exposes and agent that has conversation history.
+"""示例 LangChain 服务器展示了一个具有对话历史的代理。
 
-In this example, the history is stored entirely on the client's side.
+在这个例子中，历史完全存储在客户端。
 
-Please see other examples in LangServe on how to use RunnableWithHistory to
-store history on the server side.
+请查看 LangServe 中的其他示例，了解如何使用 RunnableWithHistory
+在服务器端存储历史记录。
 
-Relevant LangChain documentation:
+相关 LangChain 文档：
 
-* Creating a custom agent: https://python.langchain.com/docs/modules/agents/how_to/custom_agent
-* Streaming with agents: https://python.langchain.com/docs/modules/agents/how_to/streaming#custom-streaming-with-events
-* General streaming documentation: https://python.langchain.com/docs/expression_language/streaming
-* Message History: https://python.langchain.com/docs/expression_language/how_to/message_history
+* 创建自定义代理：https://python.langchain.com/docs/modules/agents/how_to/custom_agent 
+* 使用代理进行流式传输：https://python.langchain.com/docs/modules/agents/how_to/streaming#custom-streaming-with-events 
+* 通用流式文档：https://python.langchain.com/docs/expression_language/streaming 
+* 消息历史记录：https://python.langchain.com/docs/expression_language/how_to/message_history 
 
-**ATTENTION**
-1. To support streaming individual tokens you will need to use the astream events
-   endpoint rather than the streaming endpoint.
-2. This example does not truncate message history, so it will crash if you
-   send too many messages (exceed token length).
-3. The playground at the moment does not render agent output well! If you want to
-   use the playground you need to customize it's output server side using astream
-   events by wrapping it within another runnable.
-4. See the client notebook it has an example of how to use stream_events client side!
+**注意**
+1. 要支持流式传输单个令牌，您需要使用 astream 事件端点
+   而不是流式传输端点。
+2. 此示例不截断消息历史记录，因此如果您发送了太多消息（超过令牌长度），
+   它会崩溃。
+3. 目前游乐场无法很好地呈现代理输出！如果您想使用游乐场，您需要使用 astream
+   事件通过在另一个可运行项中包装它来自定义其服务器端输出。
+4. 请参阅客户端笔记本，它有一个如何在客户端使用 stream_events 的示例！
 """  # noqa: E501
 from typing import Any, List, Union
 
@@ -44,18 +43,18 @@ prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are very powerful assistant, but bad at calculating lengths of words. "
-            "Talk with the user as normal. "
-            "If they ask you to calculate the length of a word, use a tool",
+            "你是一个非常强大的助手，但不擅长计算单词的长度。 "
+            "像平常一样与用户交谈。 "
+            "如果他们要求你计算单词的长度，请使用工具",
         ),
-        # Please note the ordering of the fields in the prompt!
-        # The correct ordering is:
-        # 1. history - the past messages between the user and the agent
-        # 2. user - the user's current input
-        # 3. agent_scratchpad - the agent's working space for thinking and
-        #    invoking tools to respond to the user's input.
-        # If you change the ordering, the agent will not work correctly since
-        # the messages will be shown to the underlying LLM in the wrong order.
+        # 请注意提示中字段的顺序！
+        # 正确的顺序是：
+        # 1. history - 用户和代理之间的过去消息
+        # 2. user - 用户的当前输入
+        # 3. agent_scratchpad - 代理的工作空间，用于思考和
+        #    调用工具以回应用户的输入。
+        # 如果您更改了顺序，代理将无法正确工作，因为
+        # 消息将按错误的顺序显示给底层 LLM。
         MessagesPlaceholder(variable_name="chat_history"),
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
@@ -65,36 +64,39 @@ prompt = ChatPromptTemplate.from_messages(
 
 @tool
 def word_length(word: str) -> int:
-    """Returns a counter word"""
+    """返回计数器单词"""
     return len(word)
 
 
-# We need to set streaming=True on the LLM to support streaming individual tokens.
-# Tokens will be available when using the stream_log / stream events endpoints,
-# but not when using the stream endpoint since the stream implementation for agent
-# streams action observation pairs not individual tokens.
-# See the client notebook that shows how to use the stream events endpoint.
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, streaming=True)
+# 我们需要在 LLM 上设置 streaming=True 以支持流式传输单个令牌。
+# 当使用 stream_log / stream 事件端点时，令牌将可用，
+# 但当使用 stream 端点时不会，因为代理的流实现是流式传输动作观察对，而不是单个令牌。
+# 请参见客户端笔记本，了解如何使用 stream 事件端点。
+# llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, streaming=True)
+llm = ChatOpenAI(
+    api_key="我的API密钥",
+    base_url="https://我的基准URL/v1",      
+    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+)
 
 tools = [word_length]
 
 
 llm_with_tools = llm.bind(tools=[format_tool_to_openai_tool(tool) for tool in tools])
 
-# ATTENTION: For production use case, it's a good idea to trim the prompt to avoid
-#            exceeding the context window length used by the model.
+# 注意：对于生产用例，修剪提示以避免
+# 超出模型使用的上下文窗口长度是个好主意。
 #
-# To fix that simply adjust the chain to trim the prompt in whatever way
-# is appropriate for your use case.
-# For example, you may want to keep the system message and the last 10 messages.
-# Or you may want to trim based on the number of tokens.
-# Or you may want to also summarize the messages to keep information about things
-# that were learned about the user.
+# 要解决这个问题，简单地调整链路，以适当方式修剪提示
+# 适合您的用例。
+# 例如，您可能希望保留系统消息和最后 10 条消息。
+# 或者，您可能希望根据令牌数量进行修剪。
+# 或者，您可能希望对消息进行总结，以保留有关用户的信息。
 #
 # def prompt_trimmer(messages: List[Union[HumanMessage, AIMessage, FunctionMessage]]):
-#     '''Trims the prompt to a reasonable length.'''
-#     # Keep in mind that when trimming you may want to keep the system message!
-#     return messages[-10:] # Keep last 10 messages.
+#     '''修剪提示以合理长度。'''
+#     # 请注意，修剪时，您可能希望保留系统消息！
+#     return messages[-10:] # 保留最后 10 条消息。
 
 agent = (
     {
@@ -105,7 +107,7 @@ agent = (
         "chat_history": lambda x: x["chat_history"],
     }
     | prompt
-    # | prompt_trimmer # See comment above.
+    # | prompt_trimmer # 参见上面的注释。
     | llm_with_tools
     | OpenAIToolsAgentOutputParser()
 )
@@ -113,22 +115,21 @@ agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain 服务器",
     version="1.0",
-    description="Spin up a simple api server using LangChain's Runnable interfaces",
+    description="使用 LangChain 的 Runnable 接口启动一个简单的 API 服务器",
 )
 
 
-# We need to add these input/output schemas because the current AgentExecutor
-# is lacking in schemas.
+# 我们需要添加这些输入/输出模式，因为当前的 AgentExecutor
+# 在模式方面有所欠缺。
 class Input(BaseModel):
     input: str
-    # The field extra defines a chat widget.
-    # Please see documentation about widgets in the main README.
-    # The widget is used in the playground.
-    # Keep in mind that playground support for agents is not great at the moment.
-    # To get a better experience, you'll need to customize the streaming output
-    # for now.
+    # 额外定义的字段表示聊天小部件。
+    # 请参见主 README 中关于小部件的文档。
+    # 小部件在游乐场中使用。
+    # 请注意，目前游乐场对代理的支持不是很好。
+    # 要获得更好的体验，您现在需要自定义流式输出
     chat_history: List[Union[HumanMessage, AIMessage, FunctionMessage]] = Field(
         ...,
         extra={"widget": {"type": "chat", "input": "input", "output": "output"}},
@@ -139,7 +140,7 @@ class Output(BaseModel):
     output: Any
 
 
-# Adds routes to the app for using the chain under:
+# 为应用程序添加路由，以便在以下情况下使用链路：
 # /invoke
 # /batch
 # /stream

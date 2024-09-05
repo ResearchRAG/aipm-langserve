@@ -1,42 +1,35 @@
 #!/usr/bin/env python
-"""Example that shows how to use `per_req_config_modifier`.
+"""示例展示了如何使用 `per_req_config_modifier`。
 
-This is a simple example that shows how to use configurable runnables with
-per request configuration modification to achieve behavior that's different
-depending on the user.
+这个简单示例展示了如何使用可配置的可运行实例与每个请求的配置修改来实现根据用户不同而变化的行为。
 
-You can build on these concepts to implement a more complex app:
-* Add endpoints that allow users to manage their documents.
-* Make a more complex runnable that does something with the retrieved documents; e.g.,
-  a conversational agent that responds to the user's input with the retrieved documents
-  (which are user specific documents).
+你可以基于这些概念构建一个更复杂的应用程序：
+* 添加允许用户管理他们的文档的端点。
+* 制作一个更复杂的可运行实例，它可以使用检索到的文档执行某些操作；例如，
+  一个会话代理，它使用检索到的文档（特定于用户的文档）响应用户的输入。
 
-For authentication, we use a fake token that's the same as the username, adapting
-the following example from the FastAPI docs:
+对于认证，我们使用一个与用户名相同的假令牌，从 FastAPI 文档中调整以下示例：
 
-https://fastapi.tiangolo.com/tutorial/security/simple-oauth2/
+https://fastapi.tiangolo.com/tutorial/security/simple-oauth2/ 
 
-**ATTENTION**
+**注意**
 
-This example is not actually secure and should not be used in production.
+这个示例实际上并不安全，不应该用于生产环境。
 
-Once you understand how to use `per_req_config_modifier`, read through
-the FastAPI docs and implement proper auth:
-https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
+一旦你了解了如何使用 `per_req_config_modifier`，请阅读 FastAPI 文档并实现适当的认证：
+https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/ 
 
 
-**ATTENTION**
+**注意**
 
-This example does not integrate auth with OpenAPI, so the OpenAPI docs won't
-be able to help with authentication. This is currently a limitation
-if using `add_routes`. If you need this functionality, you can use
-the underlying `APIHandler` class directly, which affords maximal flexibility.
+这个示例没有将认证与 OpenAPI 集成，因此 OpenAPI 文档将无法帮助进行认证。这目前是使用 `add_routes` 的一个限制。
+如果你需要这个功能，你可以直接使用底层的 `APIHandler` 类，它提供了最大的灵活性。
 """
 from typing import Any, Dict, List, Optional, Union
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from langchain_community.vectorstores.chroma import Chroma
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_core.runnables import (
     ConfigurableField,
@@ -44,7 +37,8 @@ from langchain_core.runnables import (
     RunnableSerializable,
 )
 from langchain_core.vectorstores import VectorStore
-from langchain_openai import OpenAIEmbeddings
+# from langchain_openai import OpenAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from typing_extensions import Annotated
 
 from langserve import add_routes
@@ -82,9 +76,9 @@ FAKE_USERS_DB = {
         "disabled": False,
     },
     "bob": {
-        "username": "john",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
+        "username": "bob",
+        "full_name": "Bob Builder",
+        "email": "bob@example.com",
         "hashed_password": "fakehashedsecret3",
         "disabled": True,
     },
@@ -92,7 +86,7 @@ FAKE_USERS_DB = {
 
 
 def _fake_hash_password(password: str) -> str:
-    """Fake a hashed password."""
+    """伪造一个哈希密码。"""
     return "fakehashed" + password
 
 
@@ -103,8 +97,8 @@ def _get_user(db: dict, username: str) -> Union[UserInDB, None]:
 
 
 def _fake_decode_token(token: str) -> Union[User, None]:
-    # This doesn't provide any security at all
-    # Check the next version
+    # 这并不提供任何安全保障
+    # 请查看下一版本
     user = _get_user(FAKE_USERS_DB, token)
     return user
 
@@ -113,53 +107,50 @@ def _fake_decode_token(token: str) -> Union[User, None]:
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user_dict = FAKE_USERS_DB.get(form_data.username)
     if not user_dict:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+        raise HTTPException(status_code=400, detail="错误的用户名或密码")
     user = UserInDB(**user_dict)
     hashed_password = _fake_hash_password(form_data.password)
     if not hashed_password == user.hashed_password:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+        raise HTTPException(status_code=400, detail="错误的用户名或密码")
 
     return {"access_token": user.username, "token_type": "bearer"}
 
 
 async def get_current_active_user_from_request(request: Request) -> User:
-    """Get the current active user from the request."""
+    """从请求中获取当前活跃用户。"""
     token = await oauth2_scheme(request)
     user = _fake_decode_token(token)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail="无效的认证凭证",
             headers={"WWW-Authenticate": "Bearer"},
         )
     if user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(status_code=400, detail="非活跃用户")
     return user
 
 
 class PerUserVectorstore(RunnableSerializable):
-    """A custom runnable that returns a list of documents for the given user.
+    """一个自定义可运行实例，它为给定用户返回文档列表。
 
-    The runnable is configurable by the user, and the search results are
-    filtered by the user ID.
+    该可运行实例可以通过用户进行配置，并且搜索结果会根据用户 ID 进行过滤。
     """
 
     user_id: Optional[str]
     vectorstore: VectorStore
 
     class Config:
-        # Allow arbitrary types since VectorStore is an abstract interface
-        # and not a pydantic model
+        # 允许任意类型，因为 VectorStore 是一个抽象接口
+        # 并不是一个 pydantic 模型
         arbitrary_types_allowed = True
 
     def _invoke(
         self, input: str, config: Optional[RunnableConfig] = None, **kwargs: Any
     ) -> List[Document]:
-        """Invoke the retriever."""
-        # WARNING: Verify documentation of underlying vectorstore to make
-        # sure that it actually uses filters.
-        # Highly recommended to use unit-tests to verify this behavior, as
-        # implementations can be different depending on the underlying vectorstore.
+        """调用检索器。"""
+        # 警告：验证底层 vectorstore 文档以确保它实际上使用了过滤器。
+        # 强烈建议使用单元测试来验证这种行为，因为不同的底层 vectorstore 实现可能会有所不同。
         retriever = self.vectorstore.as_retriever(
             search_kwargs={"filter": {"owner_id": self.user_id}}
         )
@@ -168,64 +159,65 @@ class PerUserVectorstore(RunnableSerializable):
     def invoke(
         self, input: str, config: Optional[RunnableConfig] = None, **kwargs
     ) -> List[Document]:
-        """Add one to an integer."""
+        """调用检索器。"""
         return self._call_with_config(self._invoke, input, config, **kwargs)
 
 
 async def per_req_config_modifier(config: Dict, request: Request) -> Dict:
-    """Modify the config for each request."""
+    """为每个请求修改配置。"""
     user = await get_current_active_user_from_request(request)
     config["configurable"] = {}
-    # Attention: Make sure that the user ID is over-ridden for each request.
-    # We should not be accepting a user ID from the user in this case!
+    # 注意：确保每个请求都覆盖了用户 ID。
+    # 在这种情况下，我们不应该接受用户提供的用户 ID！
     config["configurable"]["user_id"] = user.username
     return config
 
 
 vectorstore = Chroma(
     collection_name="some_collection",
-    embedding_function=OpenAIEmbeddings(),
+    # embedding_function=OpenAIEmbeddings(),
+    embedding_function=OllamaEmbeddings(model="llama3.1")
 )
 
 vectorstore.add_documents(
     [
         Document(
-            page_content="cats like cheese",
+            page_content="猫喜欢奶酪",
             metadata={"owner_id": "alice"},
         ),
         Document(
-            page_content="cats like mice",
+            page_content="猫喜欢老鼠",
             metadata={"owner_id": "alice"},
         ),
         Document(
-            page_content="dogs like sticks",
+            page_content="狗喜欢棍子",
             metadata={"owner_id": "john"},
         ),
         Document(
-            page_content="my favorite food is cheese",
+            page_content="我最喜欢的食物是奶酪",
             metadata={"owner_id": "john"},
         ),
         Document(
-            page_content="i like walks by the ocean",
+            page_content="我喜欢海边散步",
             metadata={"owner_id": "john"},
         ),
         Document(
-            page_content="dogs like grass",
+            page_content="狗喜欢草地",
             metadata={"owner_id": "bob"},
         ),
     ]
 )
 
 per_user_retriever = PerUserVectorstore(
-    user_id=None,  # Placeholder ID that will be replaced by the per_req_config_modifier
+    user_id=None,  # 占位符 ID，将由 per_req_config_modifier 替换
     vectorstore=vectorstore,
 ).configurable_fields(
-    # Attention: Make sure to override the user ID for each request in the
-    # per_req_config_modifier. This should not be client configurable.
+    # 注意：确保在 per_req_config_modifier 中为每个请求覆盖用户 ID。
+    # 这不应该由客户端配置。
     user_id=ConfigurableField(
         id="user_id",
-        name="User ID",
-        description="The user ID to use for the retriever.",
+        name="用户 ID",
+        description="用于检索器的用户 ID。",
     )
 )
 

@@ -1,11 +1,9 @@
-"""Client server that interacts with the main server via a remote runnable.
+"""客户端服务器通过远程可执行文件与主服务器交互。
 
-This server sets up a simple proxy to the main server. It uses the RemoteRunnable
-to interact with the main server. The main server is expected to be running at
-http://localhost:8123.
+此服务器为主服务器设置了一个简单的代理。它使用RemoteRunnable与主服务器进行交互。预期主服务器在
+http://localhost:8123 上运行。
 
-A client server will likely end up doing something more clever rather than
-just being a proxy.
+客户端服务器最终可能会做一些更聪明的事情，而不仅仅是作为代理。
 """
 from fastapi import FastAPI
 
@@ -14,14 +12,14 @@ from langserve import RemoteRunnable, add_routes
 app = FastAPI()
 
 MAIN_SERVER_URL = (
-    "http://localhost:8123/chat_model/"  # <-- URL of the RUNNABLE on the main server
+    "http://localhost:8123/chat_model/"  # <-- 主服务器上可执行文件的URL
 )
-# Type inference is not automatic for remote runnables at the moment,
-# so you must specify which types are used for the playground to work.
+# 目前远程可执行文件的类型推断不是自动的，
+# 因此你必须指定用于游乐场工作所使用的类型。
 remote_runnable = RemoteRunnable(MAIN_SERVER_URL).with_types(input_type=str)
 
 
-# Let's add an example chain
+# 添加一个示例链
 add_routes(
     app,
     remote_runnable,

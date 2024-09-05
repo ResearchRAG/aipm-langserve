@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-"""An example that uses Fast API global dependencies.
+"""一个使用 FastAPI 全局依赖的示例。
 
-This approach can be used if the same authentication logic can be used
-for all endpoints in the application.
+如果应用程序的所有端点都可以使用相同的认证逻辑，那么这种方法是可行的。
 
-This may be a reasonable approach for simple applications.
+对于简单的应用程序来说，这可能是一个合理的解决方案。
 
-See:
+参见：
 
-* https://fastapi.tiangolo.com/tutorial/dependencies/global-dependencies/
-* https://fastapi.tiangolo.com/tutorial/dependencies/
-* https://fastapi.tiangolo.com/tutorial/security/
+* https://fastapi.tiangolo.com/tutorial/dependencies/global-dependencies/ 
+* https://fastapi.tiangolo.com/tutorial/dependencies/ 
+* https://fastapi.tiangolo.com/tutorial/security/ 
 """
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -21,21 +20,21 @@ from langserve import add_routes
 
 
 async def verify_token(x_token: Annotated[str, Header()]) -> None:
-    """Verify the token is valid."""
-    # Replace this with your actual authentication logic
+    """验证令牌是否有效。"""
+    # 用你实际的认证逻辑替换这里
     if x_token != "secret-token":
         raise HTTPException(status_code=400, detail="X-Token header invalid")
 
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain 服务器",
     version="1.0",
     dependencies=[Depends(verify_token)],
 )
 
 
 def add_one(x: int) -> int:
-    """Add one to an integer."""
+    """给一个整数加一。"""
     return x + 1
 
 

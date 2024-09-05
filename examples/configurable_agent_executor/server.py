@@ -1,18 +1,17 @@
 #!/usr/bin/env python
-"""An example that shows how to create a custom agent executor like Runnable.
+"""展示如何创建一个像Runnable这样的自定义代理执行器的例子。
 
-At the time of writing, there is a bug in the current AgentExecutor that
-prevents it from correctly propagating configuration of the underlying
-runnable. While that bug should be fixed, this is an example shows
-how to create a more complex custom runnable.
+在编写时，当前的AgentExecutor存在一个错误，
+它无法正确传递底层runnable的配置。虽然这个错误应该会被修复，
+但这个例子展示了如何创建一个更复杂的自定义runnable。
 
-Please see documentation for custom agent streaming here:
+请参考这里关于自定义代理流的文档：
 
-https://python.langchain.com/docs/modules/agents/how_to/streaming#stream-tokens
+https://python.langchain.com/docs/modules/agents/how_to/streaming#stream-tokens 
 
-**ATTENTION**
-To support streaming individual tokens you will need to manually set the streaming=True
-on the LLM and use the stream_log endpoint rather than stream endpoint.
+**注意**
+为了支持流式传输单个token，你需要手动在LLM上设置streaming=True
+并使用stream_log端点而不是stream端点。
 """
 from typing import Any, AsyncIterator, Dict, List, Optional, cast
 
@@ -33,18 +32,19 @@ from langchain_core.runnables.utils import Input, Output
 from langchain_core.tools import tool
 from langchain_core.utils.function_calling import format_tool_to_openai_function
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 
 from langserve import add_routes
 
 vectorstore = FAISS.from_texts(
-    ["cats like fish", "dogs like sticks"], embedding=OpenAIEmbeddings()
+    ["猫咪喜欢鱼", "狗狗喜欢棍子"], embedding=OllamaEmbeddings(model="llama3.1")
 )
 retriever = vectorstore.as_retriever()
 
 
 @tool
 def get_eugene_thoughts(query: str) -> list:
-    """Returns Eugene's thoughts on a topic."""
+    """返回Xuyan对一个话题的看法。"""
     return retriever.get_relevant_documents(query)
 
 
@@ -52,33 +52,37 @@ tools = [get_eugene_thoughts]
 
 prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", "You are a helpful assistant."),
+        ("system", "你是一个有用的助手。"),
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ]
 )
 
-# We need to set streaming=True on the LLM to support streaming individual tokens.
-# when using the stream_log endpoint.
-# .stream for agents streams action observation pairs not individual tokens.
-llm = ChatOpenAI(temperature=0, streaming=True).configurable_fields(
-    temperature=ConfigurableField(
-        id="llm_temperature",
-        name="LLM Temperature",
-        description="The temperature of the LLM",
-    )
-)
+# 我们需要在LLM上设置streaming=True以支持流式传输单个token。
+# 当使用stream_log端点时。
+# .stream对于代理流式传输动作观察对，而不是单个token。
+llm = ChatOpenAI(
+    api_key="我的API密钥",
+    base_url="https://我的基准URL/v1",      
+    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+    temperature=0,
+    streaming=True).configurable_fields(
+        temperature=ConfigurableField(
+            id="llm_temperature",
+            name="LLM温度",
+            description="LLM的温度",
+            )
+        )
 
 llm_with_tools = llm.bind(
     functions=[format_tool_to_openai_function(t) for t in tools]
 ).with_config({"run_name": "LLM"})
 
-
 class CustomAgentExecutor(Runnable):
-    """A custom runnable that will be used by the agent executor."""
+    """将由代理执行器使用的自定义runnable。"""
 
     def __init__(self, **kwargs):
-        """Initialize the runnable."""
+        """初始化runnable。"""
         super().__init__(**kwargs)
         self.agent = (
             {
@@ -93,7 +97,7 @@ class CustomAgentExecutor(Runnable):
         )
 
     def invoke(self, input: Input, config: Optional[RunnableConfig] = None) -> Output:
-        """Will not be used."""
+        """将不会被使用。"""
         raise NotImplementedError()
 
     @property
@@ -106,7 +110,7 @@ class CustomAgentExecutor(Runnable):
         config: Optional[RunnableConfig] = None,
         **kwargs: Optional[Any],
     ) -> AsyncIterator[Output]:
-        """Stream the agent's output."""
+        """流式传输代理的输出。"""
         configurable = cast(Dict[str, Any], config.pop("configurable", {}))
 
         if configurable:
@@ -129,9 +133,8 @@ class CustomAgentExecutor(Runnable):
 
 app = FastAPI()
 
-
-# We need to add these input/output schemas because the current AgentExecutor
-# is lacking in schemas.
+# 我们需要添加这些输入/输出模式，因为当前的AgentExecutor
+# 在模式方面有所欠缺。
 class Input(BaseModel):
     input: str
 
@@ -142,11 +145,11 @@ class Output(BaseModel):
 
 runnable = CustomAgentExecutor()
 
-# Add routes to the app for using the custom agent executor.
+# 为使用自定义代理执行器向应用程序添加路由。
 add_routes(
     app,
     runnable.with_types(input_type=Input, output_type=Output),
-    disabled_endpoints=["invoke", "batch"],  # not implemented
+    disabled_endpoints=["invoke", "batch"],  # 未实现
 )
 
 if __name__ == "__main__":

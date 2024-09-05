@@ -1,7 +1,6 @@
-"""An example that shows how to use the API handler directly.
+"""一个示例，展示了如何直接使用 API 处理器。
 
-For this to work with RemoteClient, the routes must match those expected
-by the client; i.e., /invoke, /batch, /stream, etc. No trailing slashes should be used.
+要使 RemoteClient 正常工作，路由必须与客户端预期的路由相匹配；即 /invoke, /batch, /stream 等。不应使用尾随斜杠。
 """
 from importlib import metadata
 from typing import Annotated
@@ -16,19 +15,18 @@ PYDANTIC_VERSION = metadata.version("pydantic")
 _PYDANTIC_MAJOR_VERSION: int = int(PYDANTIC_VERSION.split(".")[0])
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain 服务器",
     version="1.0",
-    description="Spin up a simple api server using Langchain's Runnable interfaces",
+    description="使用 LangChain 的 Runnable 接口启动一个简单的 API 服务器",
 )
 
 
 ##
-# Example 1 -- invoke, batch together with doc-generation
-# This endpoint shows how to expose `invoke` and `batch` using the APIHandler.
-# It also shows how to generate documentation properly so it works correctly
-# depending on Fast API and pydantic versions.
+# 示例 1 -- 调用和批量处理，并生成文档
+# 此端点展示了如何使用 APIHandler 暴露 `invoke` 和 `batch`。
+# 它还展示了如何正确生成文档，以便与 Fast API 和 pydantic 版本兼容。
 def add_one(x: int) -> int:
-    """Add one to the given number."""
+    """给定数字加一。"""
     return x + 1
 
 
@@ -37,65 +35,65 @@ chain = RunnableLambda(add_one)
 api_handler = APIHandler(chain, path="/simple")
 
 
-# First register the endpoints without documentation
+# 首先注册没有文档的端点
 @app.post("/simple/invoke", include_in_schema=False)
 async def simple_invoke(request: Request) -> Response:
-    """Handle a request."""
-    # The API Handler validates the parts of the request
-    # that are used by the runnnable (e.g., input, config fields)
+    """处理请求。"""
+    # API 处理器验证请求的部分内容
+    # 这些内容由可运行项使用（例如，输入，配置字段）
     return await api_handler.invoke(request)
 
 
 @app.post("/simple/batch", include_in_schema=False)
 async def simple_batch(request: Request) -> Response:
-    """Handle a request."""
-    # The API Handler validates the parts of the request
-    # that are used by the runnnable (e.g., input, config fields)
+    """处理请求。"""
+    # API 处理器验证请求的部分内容
+    # 这些内容由可运行项使用（例如，输入，配置字段）
     return await api_handler.batch(request)
 
 
-# Here, we show how to populate the documentation for the endpoint.
-# Please note that this is done separately from the actual endpoint.
-# This happens due to two reasons:
-# 1. FastAPI does not support using pydantic.v1 models in the docs endpoint.
-#    "https://github.com/tiangolo/fastapi/issues/10360"
-#    LangChain uses pydantic.v1 models!
-# 2. Configurable Runnables have a *dynamic* schema, which means that
-#    the shape of the input depends on the config.
-#    In this case, the openapi schema is a best effort showing the documentation
-#    that will work for the default config (and any non-conflicting configs).
-if _PYDANTIC_MAJOR_VERSION == 1:  # Do not use in your own
-    # Add documentation
+# 这里，我们展示了如何为端点生成文档。
+# 请注意，这是从实际端点分开完成的。
+# 这有两个原因：
+# 1. FastAPI 不支持在文档端点中使用 pydantic.v1 模型。
+#    "https://github.com/tiangolo/fastapi/issues/10360" 
+#    LangChain 使用 pydantic.v1 模型！
+# 2. 可配置的 Runnables 具有 *动态* 模式，这意味着
+#    输入的形状取决于配置。
+#    在这种情况下，openapi 模式是最佳努力，显示文档
+#    将适用于默认配置（以及任何不冲突的配置）。
+if _PYDANTIC_MAJOR_VERSION == 1:  # 不要在您自己的代码中使用
+    # 添加文档
     @app.post("/simple/invoke")
     async def simple_invoke_docs(
         request: api_handler.InvokeRequest,
     ) -> api_handler.InvokeResponse:
-        """API endpoint used only for documentation purposes. Populate /docs endpoint"""
+        """仅用于文档目的的 API 端点。填充 /docs 端点"""
         raise NotImplementedError(
-            "This endpoint is only used for documentation purposes"
+            "这个端点仅用于文档目的"
         )
 
     @app.post("/simple/batch")
     async def simple_batch_docs(
         request: api_handler.BatchRequest,
     ) -> api_handler.BatchResponse:
-        """API endpoint used only for documentation purposes. Populate /docs endpoint"""
+        """仅用于文档目的的 API 端点。填充 /docs 端点"""
         raise NotImplementedError(
-            "This endpoint is only used for documentation purposes"
+            "这个端点仅用于文档目的"
         )
 
 else:
     print(
-        "Skipping documentation generation for pydantic v2: "
-        "https://github.com/tiangolo/fastapi/issues/10360"
+        "跳过 pydantic v2 的文档生成: "
+        "https://github.com/tiangolo/fastapi/issues/10360" 
     )
 
 
 ##
-# Example 2 -- Expose `invoke` and `stream` using the API Handler.
-# Uses FastAPI Depends get a ready API handler.
+# 示例 2 -- 使用 API 处理器暴露 `invoke` 和 `stream`。
+# 使用 FastAPI Depends 获取准备好的 API 处理器。
 async def _get_api_handler() -> APIHandler:
-    """Prepare a RunnableLambda."""
+    """准备一个 RunnableLambda。"""
     return APIHandler(RunnableLambda(add_one), path="/v2")
 
 
@@ -103,9 +101,9 @@ async def _get_api_handler() -> APIHandler:
 async def v2_invoke(
     request: Request, runnable: Annotated[APIHandler, Depends(_get_api_handler)]
 ) -> Response:
-    """Handle invoke request."""
-    # The API Handler validates the parts of the request
-    # that are used by the runnnable (e.g., input, config fields)
+    """处理调用请求。"""
+    # API 处理器验证请求的部分内容
+    # 这些内容由可运行项使用（例如，输入，配置字段）
     return await runnable.invoke(request)
 
 
@@ -113,9 +111,9 @@ async def v2_invoke(
 async def v2_stream(
     request: Request, runnable: Annotated[APIHandler, Depends(_get_api_handler)]
 ) -> EventSourceResponse:
-    """Handle stream request."""
-    # The API Handler validates the parts of the request
-    # that are used by the runnnable (e.g., input, config fields)
+    """处理流请求。"""
+    # API 处理器验证请求的部分内容
+    # 这些内容由可运行项使用（例如，输入，配置字段）
     return await runnable.stream(request)
 
 

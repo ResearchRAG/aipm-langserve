@@ -1,74 +1,73 @@
-# Contributing
+# 贡献指南
 
-## Contributor License Agreement
+## 贡献者许可协议
 
-We are grateful to the contributors who help evolve LangServe and dedicate their time to the project. As the primary sponsor of LangServe, LangChain, Inc. aims to build products in the open that benefit thousands of developers while allowing us to build a sustainable business. For all code contributions to LangServe, we ask that contributors complete and sign a Contributor License Agreement (“CLA”). The agreement between contributors and the project is explicit, so LangServe users can be confident in the legal status of the source code and their right to use it.The CLA does not change the terms of the underlying license, LangServe License, used by our software.
+我们对帮助 LangServe 进化并致力于该项目的的贡献者表示感激。作为 LangServe 的主要赞助商，LangChain, Inc. 旨在构建开放的产品，这些产品可以惠及数千名开发者，同时允许我们建立可持续的业务。对于所有对 LangServe 的代码贡献，我们要求贡献者完成并签署一份贡献者许可协议（“CLA”）。贡献者与项目之间的协议是明确的，因此 LangServe 用户可以对源代码的法律地位及其使用权有信心。CLA 不改变我们软件使用的底层许可条款，即 LangServe 许可。
 
-Before you can contribute to LangServe, a bot will comment on the PR asking you to agree to the CLA if you haven't already. Agreeing to the CLA is required before code can be merged and only needs to happen on the first contribution to the project. All subsequent contributions will fall under the same CLA.
+在您能够为 LangServe 做出贡献之前，如果您还没有签署，一个机器人将在 PR 上发表评论，要求您同意 CLA。同意 CLA 是代码合并的先决条件，并且只需要在首次为项目做出贡献时发生。所有后续的贡献都将遵循同一 CLA。
 
-## 🗺️ Guidelines
+## 🗺️ 指南
 
-### Dependency Management: Poetry and other env/dependency managers
+### 依赖管理：Poetry 及其他环境/依赖管理工具
 
-This project uses [Poetry](https://python-poetry.org/) v1.6.1+ as a dependency manager.
+本项目使用 [Poetry](https://python-poetry.org/) v1.6.1+ 作为依赖管理工具。
 
-### Local Development Dependencies
+### 本地开发依赖
 
-Install langserve development requirements (for running langchain, running examples, linting, formatting, tests, and coverage):
+安装 langserve 开发需求（用于运行 langchain、运行示例、代码格式化、测试和覆盖）：
 
 ```sh
 poetry install --with test,dev
 ```
 
-Then verify that tests pass:
+然后验证测试是否通过：
 
 ```sh
 make test
 ```
 
-### Formatting and Linting
+### 格式化和代码检查
 
-Run these locally before submitting a PR; the CI system will check also.
+在提交 PR 之前，请先在本地运行；CI 系统也会进行检查。
 
-#### Code Formatting
+#### 代码格式化
 
-Formatting for this project is done via a combination of [Black](https://black.readthedocs.io/en/stable/) and [ruff](https://docs.astral.sh/ruff/rules/).
+本项目的格式化通过 [Black](https://black.readthedocs.io/en/stable/) 和 [ruff](https://docs.astral.sh/ruff/rules/) 的组合来完成。
 
-To run formatting for this project:
+要运行本项目的格式化：
 
 ```sh
 make format
 ```
 
-#### Linting
+#### 代码检查
 
-Linting for this project is done via a combination of [Black](https://black.readthedocs.io/en/stable/), [ruff](https://docs.astral.sh/ruff/rules/), and [mypy](http://mypy-lang.org/).
+本项目的代码检查通过 [Black](https://black.readthedocs.io/en/stable/)、[ruff](https://docs.astral.sh/ruff/rules/) 和 [mypy](http://mypy-lang.org/) 的组合来完成。
 
-To run linting for this project:
+要运行本项目的代码检查：
 
 ```sh
 make lint
 ```
 
-## Frontend Playground Development
+## 前端游乐场开发
 
-Here are a few tips to keep in mind when developing the LangServe playgrounds:
+在开发 LangServe 游乐场时，请记住以下几点：
 
-### Setup
+### 设置
 
-Switch directories to `langserve/playground` or `langserve/chat_playground`, then run `yarn` to install required
-dependencies. `yarn dev` will start the playground at `http://localhost:5173/____LANGSERVE_BASE_URL/` in dev mode.
+切换到 `langserve/playground` 或 `langserve/chat_playground` 目录，然后运行 `yarn` 安装所需的依赖。`yarn dev` 将在开发模式下启动游乐场，地址为 `http://localhost:5173/____LANGSERVE_BASE_URL/`。
 
-You can run one of the chains in the `examples/` repo using `poetry run python path/to/file.py`.
+您可以使用 `poetry run python path/to/file.py` 运行 `examples/` 仓库中的一个链。
 
-### Setting CORS
+### 设置 CORS
 
-You may need to add the following to an example route when developing the playground in dev mode to handle CORS:
+在开发游乐场的开发模式时，您可能需要在示例路由中添加以下内容以处理 CORS：
 
 ```python
 from fastapi.middleware.cors import CORSMiddleware
 
-# Set all CORS enabled origins
+# 设置所有 CORS 启用的源
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

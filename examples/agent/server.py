@@ -1,21 +1,22 @@
 #!/usr/bin/env python
-"""Example LangChain server exposes a conversational retrieval agent.
+"""
+示例 LangChain 服务器公开了一个会话检索代理。
 
-Relevant LangChain documentation:
+相关 LangChain 文档：
 
-* Creating a custom agent: https://python.langchain.com/docs/modules/agents/how_to/custom_agent
-* Streaming with agents: https://python.langchain.com/docs/modules/agents/how_to/streaming#custom-streaming-with-events
-* General streaming documentation: https://python.langchain.com/docs/expression_language/streaming
+* 创建自定义代理：https://python.langchain.com/docs/modules/agents/how_to/custom_agent 
+* 使用代理进行流式传输：https://python.langchain.com/docs/modules/agents/how_to/streaming#custom-streaming-with-events 
+* 通用流式传输文档：https://python.langchain.com/docs/expression_language/streaming 
 
-**ATTENTION**
-1. To support streaming individual tokens you will need to use the astream events
-   endpoint rather than the streaming endpoint.
-2. This example does not truncate message history, so it will crash if you
-   send too many messages (exceed token length).
-3. The playground at the moment does not render agent output well! If you want to
-   use the playground you need to customize it's output server side using astream
-   events by wrapping it within another runnable.
-4. See the client notebook it has an example of how to use stream_events client side!
+其它参考文档：
+
+https://docs.together.ai/docs/openai-api-compatibility
+
+**注意**
+1. 要支持流式传输单个标记，你需要使用 astream events 端点而不是流式传输端点。
+2. 此示例不会截断消息历史记录，因此如果你发送了太多消息（超过标记长度），它将会崩溃。
+3. 目前游乐场无法很好地呈现代理输出！如果你想使用游乐场，你需要使用 astream events 通过在另一个可运行的包装中自定义其服务器端输出。
+4. 请参阅客户端笔记本，其中有如何使用 stream_events 客户端端的例子！
 """
 from typing import Any
 
@@ -29,18 +30,20 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
 from langchain_core.utils.function_calling import format_tool_to_openai_function
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 
 from langserve import add_routes
 
 vectorstore = FAISS.from_texts(
-    ["cats like fish", "dogs like sticks"], embedding=OpenAIEmbeddings()
+    ["猫喜欢鱼", "狗喜欢棍子"], embedding=OllamaEmbeddings(
+        model="llama3.1")
 )
 retriever = vectorstore.as_retriever()
 
 
 @tool
 def get_eugene_thoughts(query: str) -> list:
-    """Returns Eugene's thoughts on a topic."""
+    """返回 Eugene 对某个话题的看法。"""
     return retriever.get_relevant_documents(query)
 
 
@@ -48,23 +51,26 @@ tools = [get_eugene_thoughts]
 
 prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", "You are a helpful assistant."),
-        # Please note that the ordering of the user input vs.
-        # the agent_scratchpad is important.
-        # The agent_scratchpad is a working space for the agent to think,
-        # invoke tools, see tools outputs in order to respond to the given
-        # user input. It has to come AFTER the user input.
+        ("system", "你是一个有用的助手。"),
+        # 请注意用户输入与 agent_scratchpad 的顺序很重要。
+        # agent_scratchpad 是代理的工作空间，用于思考，
+        # 调用工具，查看工具输出，以回应给定的
+        # 用户输入。它必须在用户输入之后。
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ]
 )
 
-# We need to set streaming=True on the LLM to support streaming individual tokens.
-# Tokens will be available when using the stream_log / stream events endpoints,
-# but not when using the stream endpoint since the stream implementation for agent
-# streams action observation pairs not individual tokens.
-# See the client notebook that shows how to use the stream events endpoint.
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, streaming=True)
+# 我们需要在 LLM 上设置 streaming=True 以支持流式传输单个标记。
+# 当使用 stream_log / stream events 端点时，标记将可用，
+# 但是当使用 stream 端点时不会，因为代理的流实现是流式传输动作观察对，而不是单个标记。
+# 请参阅显示如何使用 stream events 端点的客户端笔记本。
+# llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, streaming=True)
+llm = ChatOpenAI(
+    api_key="我的API密钥",
+    base_url="https://我的基准URL/v1",      
+    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+)
 
 llm_with_tools = llm.bind(functions=[format_tool_to_openai_function(t) for t in tools])
 
@@ -83,14 +89,13 @@ agent = (
 agent_executor = AgentExecutor(agent=agent, tools=tools)
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain 服务器",
     version="1.0",
-    description="Spin up a simple api server using LangChain's Runnable interfaces",
+    description="使用 LangChain 的可运行接口快速搭建一个简单的 API 服务器",
 )
 
-
-# We need to add these input/output schemas because the current AgentExecutor
-# is lacking in schemas.
+# 我们需要添加这些输入/输出模式，因为当前的 AgentExecutor
+# 在模式方面有所欠缺。
 class Input(BaseModel):
     input: str
 
@@ -99,7 +104,7 @@ class Output(BaseModel):
     output: Any
 
 
-# Adds routes to the app for using the chain under:
+# 为应用程序添加路由，以便在以下路径下使用链：
 # /invoke
 # /batch
 # /stream

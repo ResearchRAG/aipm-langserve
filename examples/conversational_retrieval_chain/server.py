@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-"""Example LangChain server exposes a conversational retrieval chain.
+"""示例LangChain服务器公开了一个会话检索链。
 
-Follow the reference here:
+参考这里：
 
-https://python.langchain.com/docs/expression_language/cookbook/retrieval#conversational-retrieval-chain
+https://python.langchain.com/docs/expression_language/cookbook/retrieval#conversational-retrieval-chain 
 
-To run this example, you will need to install the following packages:
+要运行这个示例，你需要安装以下包：
 pip install langchain openai faiss-cpu tiktoken
 """  # noqa: F401
 
@@ -17,24 +17,24 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate, format_document
 from langchain_core.runnables import RunnableMap, RunnablePassthrough
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+# from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_ollama import ChatOllama, OllamaEmbeddings
 
 from langserve import add_routes
 from langserve.pydantic_v1 import BaseModel, Field
 
-_TEMPLATE = """Given the following conversation and a follow up question, rephrase the 
-follow up question to be a standalone question, in its original language.
+_TEMPLATE = """给定以下对话和后续问题，将后续问题改写为一个独立的原始语言问题。
 
-Chat History:
+聊天历史：
 {chat_history}
-Follow Up Input: {question}
-Standalone question:"""
+后续输入：{question}
+独立问题："""
 CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(_TEMPLATE)
 
-ANSWER_TEMPLATE = """Answer the question based only on the following context:
+ANSWER_TEMPLATE = """仅根据以下上下文回答问题：
 {context}
 
-Question: {question}
+问题：{question}
 """
 ANSWER_PROMPT = ChatPromptTemplate.from_template(ANSWER_TEMPLATE)
 
@@ -44,23 +44,23 @@ DEFAULT_DOCUMENT_PROMPT = PromptTemplate.from_template(template="{page_content}"
 def _combine_documents(
     docs, document_prompt=DEFAULT_DOCUMENT_PROMPT, document_separator="\n\n"
 ):
-    """Combine documents into a single string."""
+    """将文档合并为一个字符串。"""
     doc_strings = [format_document(doc, document_prompt) for doc in docs]
     return document_separator.join(doc_strings)
 
 
 def _format_chat_history(chat_history: List[Tuple]) -> str:
-    """Format chat history into a string."""
+    """将聊天历史格式化为字符串。"""
     buffer = ""
     for dialogue_turn in chat_history:
-        human = "Human: " + dialogue_turn[0]
-        ai = "Assistant: " + dialogue_turn[1]
+        human = "人类：" + dialogue_turn[0]
+        ai = "助手：" + dialogue_turn[1]
         buffer += "\n" + "\n".join([human, ai])
     return buffer
 
 
 vectorstore = FAISS.from_texts(
-    ["harrison worked at kensho"], embedding=OpenAIEmbeddings()
+    ["harrison worked at kensho"], embedding=OllamaEmbeddings(model="llama3.1")
 )
 retriever = vectorstore.as_retriever()
 
@@ -69,7 +69,7 @@ _inputs = RunnableMap(
         chat_history=lambda x: _format_chat_history(x["chat_history"])
     )
     | CONDENSE_QUESTION_PROMPT
-    | ChatOpenAI(temperature=0)
+    | ChatOllama(model="llama3.1",temperature=0)
     | StrOutputParser(),
 )
 _context = {
@@ -78,9 +78,9 @@ _context = {
 }
 
 
-# User input
+# 用户输入
 class ChatHistory(BaseModel):
-    """Chat history with the bot."""
+    """与机器人的聊天历史。"""
 
     chat_history: List[Tuple[str, str]] = Field(
         ...,
@@ -90,16 +90,16 @@ class ChatHistory(BaseModel):
 
 
 conversational_qa_chain = (
-    _inputs | _context | ANSWER_PROMPT | ChatOpenAI() | StrOutputParser()
+    _inputs | _context | ANSWER_PROMPT | ChatOllama(model="llama3.1") | StrOutputParser()
 )
 chain = conversational_qa_chain.with_types(input_type=ChatHistory)
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain 服务器",
     version="1.0",
-    description="Spin up a simple api server using Langchain's Runnable interfaces",
+    description="使用Langchain的Runnable接口启动一个简单的API服务器",
 )
-# Adds routes to the app for using the chain under:
+# 为使用链向应用程序添加路由：
 # /invoke
 # /batch
 # /stream

@@ -1,16 +1,12 @@
 #!/usr/bin/env python
-"""Example that shows how to upload files and process files in the server.
+"""
+示例展示了如何在服务器上传和处理文件。
 
-This example uses a very simple architecture for dealing with file uploads
-and processing.
+这个示例使用了一种非常简单的架构来处理文件上传和处理。
 
-The main issue with this approach is that processing is done in
-the same process rather than offloaded to a process pool. A smaller
-issue is that the base64 encoding incurs an additional encoding/decoding
-overhead.
+这种方法的主要问题是处理是在同一个进程中完成的，而不是卸载到进程池中。一个较小的问题是，base64编码增加了额外的编码/解码开销。
 
-This example also specifies a "base64file" widget, which will create a widget
-allowing one to upload a binary file using the langserve playground UI.
+这个示例还指定了一个 "base64file" 小部件，它将创建一个小部件，允许用户使用 langserve 游乐场 UI 上传二进制文件。
 """
 import base64
 
@@ -23,24 +19,23 @@ from langchain_core.runnables import RunnableLambda
 from langserve import CustomUserType, add_routes
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain 服务器",
     version="1.0",
-    description="Spin up a simple api server using Langchain's Runnable interfaces",
+    description="使用 LangChain 的可运行接口快速搭建一个简单的 API 服务器",
 )
 
-
-# ATTENTION: Inherit from CustomUserType instead of BaseModel otherwise
-#            the server will decode it into a dict instead of a pydantic model.
+# 注意：继承自 CustomUserType 而不是 BaseModel，否则
+# 服务器会将其解码为字典而不是 pydantic 模型。
 class FileProcessingRequest(CustomUserType):
-    """Request including a base64 encoded file."""
+    """包含 base64 编码文件的请求。"""
 
-    # The extra field is used to specify a widget for the playground UI.
+    # extra 字段用于为游乐场 UI 指定小部件。
     file: str = Field(..., extra={"widget": {"type": "base64file"}})
     num_chars: int = 100
 
 
 def _process_file(request: FileProcessingRequest) -> str:
-    """Extract the text from the first page of the PDF."""
+    """从 PDF 的第一页提取文本。"""
     content = base64.b64decode(request.file.encode("utf-8"))
     blob = Blob(data=content)
     documents = list(PDFMinerParser().lazy_parse(blob))

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Endpoint shows off available playground widgets."""
+"""端点展示了可用的游乐场小部件。"""
 import base64
 from json import dumps
 from typing import Any, Dict, List, Tuple
@@ -22,13 +22,13 @@ from langserve import CustomUserType
 from langserve.server import add_routes
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain 服务器",
     version="1.0",
-    description="Spin up a simple api server using Langchain's Runnable interfaces",
+    description="使用Langchain的Runnable接口启动一个简单的API服务器",
 )
 
 
-# Set all CORS enabled origins
+# 设置所有CORS启用的来源
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,21 +38,20 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Example 1: Chat Widget
-# This shows how to create a chat widget.
-
+# 示例 1：聊天小部件
+# 这展示了如何创建一个聊天小部件。
 
 class ChatHistory(CustomUserType):
     chat_history: List[Tuple[str, str]] = Field(
         ...,
         examples=[[("a", "aa")]],
-        extra={"widget": {"type": "chat", "input": "question", "output": "answer"}},
+        extra={"widget": {"type": "chat", "input": "问题", "output": "答案"}},
     )
     question: str
 
 
 def _format_to_messages(input: ChatHistory) -> List[BaseMessage]:
-    """Format the input to a list of messages."""
+    """将输入格式化为消息列表。"""
     history = input.chat_history
     user_input = input.question
 
@@ -75,21 +74,19 @@ add_routes(
 )
 
 
-# Example 2: Chat Widget with History
-# This one isn't hooked up toa model. It just shows that FunctionMessages can be used
-# surfaced as well in the playground.
-
+# 示例 2：带历史记录的聊天小部件
+# 这个没有连接到模型。它只是展示了FunctionMessages也可以在游乐场中显示。
 
 class ChatHistoryMessage(BaseModel):
     chat_history: List[BaseMessage] = Field(
         ...,
-        extra={"widget": {"type": "chat", "input": "location"}},
+        extra={"widget": {"type": "chat", "input": "位置"}},
     )
     location: str
 
 
 def chat_message_bot(input: Dict[str, Any]) -> List[BaseMessage]:
-    """Bot that repeats the question twice."""
+    """重复问题两次的机器人。"""
     return [
         AIMessage(
             content="",
@@ -101,7 +98,7 @@ def chat_message_bot(input: Dict[str, Any]) -> List[BaseMessage]:
             },
         ),
         FunctionMessage(name="get_weather", content='{"value": 32}'),
-        AIMessage(content=f"Weather in {input['location']}: 32"),
+        AIMessage(content=f"{input['location']}的天气：32"),
     ]
 
 
@@ -112,7 +109,7 @@ add_routes(
     path="/chat_message",
 )
 
-# Example 3: File Processing Widget
+# 示例 3：文件处理小部件
 
 
 class FileProcessingRequest(BaseModel):
@@ -121,7 +118,7 @@ class FileProcessingRequest(BaseModel):
 
 
 def process_file(input: Dict[str, Any]) -> str:
-    """Extract the text from the first page of the PDF."""
+    """从PDF的第一页提取文本。"""
     content = base64.decodebytes(input["file"])
     blob = Blob(data=content)
     documents = list(PDFMinerParser().lazy_parse(blob))

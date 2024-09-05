@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-"""Example of a chat server with persistence handled on the backend.
+"""示例聊天服务器，后端处理持久性。
 
-For simplicity, we're using file storage here -- to avoid the need to set up
-a database. This is obviously not a good idea for a production environment,
-but will help us to demonstrate the RunnableWithMessageHistory interface.
+为简化起见，我们这里使用文件存储——避免设置数据库的需要。这显然不适用于生产环境，
+但有助于我们演示可运行的消息历史记录接口。
 
-We'll use cookies to identify the user. This will help illustrate how to
-fetch configuration from the request.
+我们将使用cookies来识别用户。这将有助于说明如何从请求中获取配置。
 """
 import re
 from pathlib import Path
@@ -24,24 +22,23 @@ from typing_extensions import TypedDict
 
 from langserve import add_routes
 
-# Define the minimum required version as (0, 1, 0)
-# Earlier versions did not allow specifying custom config fields in
-# RunnableWithMessageHistory.
+# 定义最小所需版本为 (0, 1, 0)
+# 早期版本不允许在 RunnableWithMessageHistory 中指定自定义配置字段。
 MIN_VERSION_LANGCHAIN_CORE = (0, 1, 0)
 
-# Split the version string by "." and convert to integers
+# 按 "." 分割版本字符串并转换为整数
 LANGCHAIN_CORE_VERSION = tuple(map(int, __version__.split(".")))
 
 if LANGCHAIN_CORE_VERSION < MIN_VERSION_LANGCHAIN_CORE:
     raise RuntimeError(
-        f"Minimum required version of langchain-core is {MIN_VERSION_LANGCHAIN_CORE}, "
-        f"but found {LANGCHAIN_CORE_VERSION}"
+        f"langchain-core的最小所需版本为 {MIN_VERSION_LANGCHAIN_CORE}, "
+        f"但找到的是 {LANGCHAIN_CORE_VERSION}"
     )
 
 
 def _is_valid_identifier(value: str) -> bool:
-    """Check if the value is a valid identifier."""
-    # Use a regular expression to match the allowed characters
+    """检查值是否为有效标识符。"""
+    # 使用正则表达式匹配允许的字符
     valid_characters = re.compile(r"^[a-zA-Z0-9-_]+$")
     return bool(valid_characters.match(value))
 
@@ -49,35 +46,34 @@ def _is_valid_identifier(value: str) -> bool:
 def create_session_factory(
     base_dir: Union[str, Path],
 ) -> Callable[[str], BaseChatMessageHistory]:
-    """Create a factory that can retrieve chat histories.
+    """创建一个可以检索聊天历史的工厂。
 
-    The chat histories are keyed by user ID and conversation ID.
+    聊天历史按用户ID和对话ID键控。
 
-    Args:
-        base_dir: Base directory to use for storing the chat histories.
+    参数:
+        base_dir: 用于存储聊天历史的基目录。
 
-    Returns:
-        A factory that can retrieve chat histories keyed by user ID and conversation ID.
+    返回:
+        一个可以按用户ID和对话ID检索聊天历史的工厂。
     """
     base_dir_ = Path(base_dir) if isinstance(base_dir, str) else base_dir
     if not base_dir_.exists():
         base_dir_.mkdir(parents=True)
 
     def get_chat_history(user_id: str, conversation_id: str) -> FileChatMessageHistory:
-        """Get a chat history from a user id and conversation id."""
+        """根据用户ID和对话ID获取聊天历史。"""
         if not _is_valid_identifier(user_id):
             raise ValueError(
-                f"User ID {user_id} is not in a valid format. "
-                "User ID must only contain alphanumeric characters, "
-                "hyphens, and underscores."
-                "Please include a valid cookie in the request headers called 'user-id'."
+                f"用户ID {user_id} 格式不正确。"
+                "用户ID只能包含字母数字字符、"
+                "连字符和下划线。"
+                "请在请求头中包含名为 'user-id' 的有效cookie。"
             )
         if not _is_valid_identifier(conversation_id):
             raise ValueError(
-                f"Conversation ID {conversation_id} is not in a valid format. "
-                "Conversation ID must only contain alphanumeric characters, "
-                "hyphens, and underscores. Please provide a valid conversation id "
-                "via config. For example, "
+                f"对话ID {conversation_id} 格式不正确。"
+                "对话ID只能包含字母数字字符、"
+                "连字符和下划线。请通过配置提供有效的对话ID。例如, "
                 "chain.invoke(.., {'configurable': {'conversation_id': '123'}})"
             )
 
@@ -91,25 +87,25 @@ def create_session_factory(
 
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain 服务器",
     version="1.0",
-    description="Spin up a simple api server using Langchain's Runnable interfaces",
+    description="使用Langchain的Runnable接口启动一个简单的API服务器",
 )
 
 
 def _per_request_config_modifier(
     config: Dict[str, Any], request: Request
 ) -> Dict[str, Any]:
-    """Update the config"""
+    """更新配置"""
     config = config.copy()
     configurable = config.get("configurable", {})
-    # Look for a cookie named "user_id"
+    # 查找名为 "user_id" 的cookie
     user_id = request.cookies.get("user_id", None)
 
     if user_id is None:
         raise HTTPException(
             status_code=400,
-            detail="No user id found. Please set a cookie named 'user_id'.",
+            detail="未找到用户ID。请设置名为 'user_id' 的cookie。",
         )
 
     configurable["user_id"] = user_id
@@ -117,10 +113,10 @@ def _per_request_config_modifier(
     return config
 
 
-# Declare a chain
+# 声明一个链
 prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", "You're an assistant by the name of Bob."),
+        ("system", "你是一个名叫Bob的助手。"),
         MessagesPlaceholder(variable_name="history"),
         ("human", "{human_input}"),
     ]
@@ -130,10 +126,10 @@ chain = prompt | ChatOpenAI()
 
 
 class InputChat(TypedDict):
-    """Input for the chat endpoint."""
+    """聊天端点的输入。"""
 
     human_input: str
-    """Human input"""
+    """人类输入"""
 
 
 chain_with_history = RunnableWithMessageHistory(
@@ -145,16 +141,16 @@ chain_with_history = RunnableWithMessageHistory(
         ConfigurableFieldSpec(
             id="user_id",
             annotation=str,
-            name="User ID",
-            description="Unique identifier for the user.",
+            name="用户ID",
+            description="用户的唯一标识符。",
             default="",
             is_shared=True,
         ),
         ConfigurableFieldSpec(
             id="conversation_id",
             annotation=str,
-            name="Conversation ID",
-            description="Unique identifier for the conversation.",
+            name="对话ID",
+            description="对话的唯一标识符。",
             default="",
             is_shared=True,
         ),
@@ -166,13 +162,11 @@ add_routes(
     app,
     chain_with_history,
     per_req_config_modifier=_per_request_config_modifier,
-    # Disable playground and batch
-    # 1) Playground we're passing information via headers, which is not supported via
-    #    the playground right now.
-    # 2) Disable batch to avoid users being confused. Batch will work fine
-    #    as long as users invoke it with multiple configs appropriately, but
-    #    without validation users are likely going to forget to do that.
-    #    In addition, there's likely little sense in support batch for a chatbot.
+    # 禁用游乐场和批量
+    # 1) 游乐场我们通过头部传递信息，这在当前游乐场中不受支持。
+    # 2) 禁用批量以避免用户混淆。只要用户适当地使用多个配置调用批量，
+    #    批量将正常工作，但如果没有验证，用户可能会忘记这样做。
+    #    此外，对于聊天机器人，支持批量可能没有太多意义。
     disabled_endpoints=["playground", "batch"],
 )
 

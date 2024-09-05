@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Example LangChain server passes through some of the inputs in the response."""
+"""示例LangChain服务器在响应中传递部分输入信息。"""
 
 from typing import Any, Callable, Dict, List, Optional, TypedDict
 
@@ -11,21 +11,21 @@ from langchain_openai import ChatOpenAI
 from langserve import add_routes
 
 app = FastAPI(
-    title="LangChain Server",
+    title="LangChain服务器",
     version="1.0",
-    description="Spin up a simple api server using Langchain's Runnable interfaces",
+    description="使用Langchain的Runnable接口快速搭建一个简单的API服务器",
 )
 
 
 def _create_projection(
     *, include_keys: Optional[List] = None, exclude_keys: Optional[List[str]] = None
 ) -> Callable[[dict], dict]:
-    """Create a projection function."""
+    """创建一个投影函数。"""
 
     def _project_dict(
         d: dict,
     ) -> dict:
-        """Project dictionary."""
+        """投影字典。"""
         keys = d.keys()
         if include_keys is not None:
             keys = set(keys) & set(include_keys)
@@ -37,9 +37,13 @@ def _create_projection(
 
 
 prompt = ChatPromptTemplate.from_messages(
-    [("human", "translate `{thing}` to {language}")]
+    [("human", "将 `{thing}` 翻译成 {language}")]
 )
-model = ChatOpenAI()
+model = ChatOpenAI(
+    api_key="我的API密钥",
+    base_url="https://我的基准URL/v1",      
+    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+)
 
 underlying_chain = prompt | model
 
@@ -66,9 +70,8 @@ add_routes(
     app, wrapped_chain.with_types(input_type=Input, output_type=Output), path="/v1"
 )
 
-
-# Version 2
-# Uses RunnablePassthrough.assign
+# 版本2
+# 使用RunnablePassthrough.assign
 wrapped_chain_2 = RunnablePassthrough.assign(output=underlying_chain) | {
     "output": lambda x: x["output"],
     "info": lambda x: x["info"],

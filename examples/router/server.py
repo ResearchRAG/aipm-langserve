@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-"""Example LangChain Server that uses a Fast API Router.
+"""示例LangChain服务器，使用FastAPI路由器。
 
-When applications grow, it becomes useful to use FastAPI's Router to organize
-the routes.
+当应用程序增长时，使用FastAPI的路由器来组织路由变得非常有用。
 
-See more documentation at:
+更多文档请访问：
 
-https://fastapi.tiangolo.com/tutorial/bigger-applications/
+https://fastapi.tiangolo.com/tutorial/bigger-applications/ 
 """
 from fastapi import APIRouter, FastAPI
 from langchain_anthropic import ChatAnthropic
@@ -18,13 +17,13 @@ app = FastAPI()
 
 router = APIRouter(prefix="/models")
 
-# Invocations to this router will appear in trace logs as /models/openai
+# 调用此路由器将在跟踪日志中显示为 /models/openai
 add_routes(
     router,
     ChatOpenAI(model="gpt-3.5-turbo-0125"),
     path="/openai",
 )
-# Invocations to this router will appear in trace logs as /models/anthropic
+# 调用此路由器将在跟踪日志中显示为 /models/anthropic
 add_routes(
     router,
     ChatAnthropic(model="claude-3-haiku-20240307"),
