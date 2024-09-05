@@ -31,8 +31,8 @@ from langchain_core.runnables import (
 from langchain_core.runnables.utils import Input, Output
 from langchain_core.tools import tool
 from langchain_core.utils.function_calling import format_tool_to_openai_function
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_ollama import OllamaEmbeddings
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from langserve import add_routes
 
@@ -63,20 +63,22 @@ prompt = ChatPromptTemplate.from_messages(
 # .stream对于代理流式传输动作观察对，而不是单个token。
 llm = ChatOpenAI(
     api_key="我的API密钥",
-    base_url="https://我的基准URL/v1",      
+    base_url="https://我的基准URL/v1",
     model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
     temperature=0,
-    streaming=True).configurable_fields(
-        temperature=ConfigurableField(
-            id="llm_temperature",
-            name="LLM温度",
-            description="LLM的温度",
-            )
-        )
+    streaming=True,
+).configurable_fields(
+    temperature=ConfigurableField(
+        id="llm_temperature",
+        name="LLM温度",
+        description="LLM的温度",
+    )
+)
 
 llm_with_tools = llm.bind(
     functions=[format_tool_to_openai_function(t) for t in tools]
 ).with_config({"run_name": "LLM"})
+
 
 class CustomAgentExecutor(Runnable):
     """将由代理执行器使用的自定义runnable。"""
@@ -132,6 +134,7 @@ class CustomAgentExecutor(Runnable):
 
 
 app = FastAPI()
+
 
 # 我们需要添加这些输入/输出模式，因为当前的AgentExecutor
 # 在模式方面有所欠缺。

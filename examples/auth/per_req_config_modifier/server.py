@@ -37,6 +37,7 @@ from langchain_core.runnables import (
     RunnableSerializable,
 )
 from langchain_core.vectorstores import VectorStore
+
 # from langchain_openai import OpenAIEmbeddings
 from langchain_ollama import OllamaEmbeddings
 from typing_extensions import Annotated
@@ -176,7 +177,7 @@ async def per_req_config_modifier(config: Dict, request: Request) -> Dict:
 vectorstore = Chroma(
     collection_name="some_collection",
     # embedding_function=OpenAIEmbeddings(),
-    embedding_function=OllamaEmbeddings(model="llama3.1")
+    embedding_function=OllamaEmbeddings(model="llama3.1"),
 )
 
 vectorstore.add_documents(

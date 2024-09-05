@@ -2,10 +2,10 @@
 """示例 LangChain 服务器公开了多个可运行项（在这种情况下是 LLM）。"""
 
 from fastapi import FastAPI
-# from langchain_anthropic import ChatAnthropic
-from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
 
+# from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 
 from langserve import add_routes
 
@@ -30,9 +30,9 @@ add_routes(
     app,
     ChatOpenAI(
         api_key="我的API密钥",
-        base_url="https://我的基准URL/v1",      
+        base_url="https://我的基准URL/v1",
         model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-        ),
+    ),
     path="/groq",
 )
 add_routes(

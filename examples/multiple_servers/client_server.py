@@ -11,9 +11,7 @@ from langserve import RemoteRunnable, add_routes
 
 app = FastAPI()
 
-MAIN_SERVER_URL = (
-    "http://localhost:8123/chat_model/"  # <-- 主服务器上可执行文件的URL
-)
+MAIN_SERVER_URL = "http://localhost:8123/chat_model/"  # <-- 主服务器上可执行文件的URL
 # 目前远程可执行文件的类型推断不是自动的，
 # 因此你必须指定用于游乐场工作所使用的类型。
 remote_runnable = RemoteRunnable(MAIN_SERVER_URL).with_types(input_type=str)

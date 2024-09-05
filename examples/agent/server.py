@@ -29,14 +29,13 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
 from langchain_core.utils.function_calling import format_tool_to_openai_function
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_ollama import OllamaEmbeddings
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from langserve import add_routes
 
 vectorstore = FAISS.from_texts(
-    ["猫喜欢鱼", "狗喜欢棍子"], embedding=OllamaEmbeddings(
-        model="llama3.1")
+    ["猫喜欢鱼", "狗喜欢棍子"], embedding=OllamaEmbeddings(model="llama3.1")
 )
 retriever = vectorstore.as_retriever()
 
@@ -68,8 +67,8 @@ prompt = ChatPromptTemplate.from_messages(
 # llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, streaming=True)
 llm = ChatOpenAI(
     api_key="我的API密钥",
-    base_url="https://我的基准URL/v1",      
-    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+    base_url="https://我的基准URL/v1",
+    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
 )
 
 llm_with_tools = llm.bind(functions=[format_tool_to_openai_function(t) for t in tools])
@@ -93,6 +92,7 @@ app = FastAPI(
     version="1.0",
     description="使用 LangChain 的可运行接口快速搭建一个简单的 API 服务器",
 )
+
 
 # 我们需要添加这些输入/输出模式，因为当前的 AgentExecutor
 # 在模式方面有所欠缺。

@@ -56,7 +56,7 @@ async def simple_batch(request: Request) -> Response:
 # 请注意，这是从实际端点分开完成的。
 # 这有两个原因：
 # 1. FastAPI 不支持在文档端点中使用 pydantic.v1 模型。
-#    "https://github.com/tiangolo/fastapi/issues/10360" 
+#    "https://github.com/tiangolo/fastapi/issues/10360"
 #    LangChain 使用 pydantic.v1 模型！
 # 2. 可配置的 Runnables 具有 *动态* 模式，这意味着
 #    输入的形状取决于配置。
@@ -69,23 +69,19 @@ if _PYDANTIC_MAJOR_VERSION == 1:  # 不要在您自己的代码中使用
         request: api_handler.InvokeRequest,
     ) -> api_handler.InvokeResponse:
         """仅用于文档目的的 API 端点。填充 /docs 端点"""
-        raise NotImplementedError(
-            "这个端点仅用于文档目的"
-        )
+        raise NotImplementedError("这个端点仅用于文档目的")
 
     @app.post("/simple/batch")
     async def simple_batch_docs(
         request: api_handler.BatchRequest,
     ) -> api_handler.BatchResponse:
         """仅用于文档目的的 API 端点。填充 /docs 端点"""
-        raise NotImplementedError(
-            "这个端点仅用于文档目的"
-        )
+        raise NotImplementedError("这个端点仅用于文档目的")
 
 else:
     print(
         "跳过 pydantic v2 的文档生成: "
-        "https://github.com/tiangolo/fastapi/issues/10360" 
+        "https://github.com/tiangolo/fastapi/issues/10360"
     )
 
 

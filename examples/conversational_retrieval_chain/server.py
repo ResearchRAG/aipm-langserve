@@ -17,6 +17,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate, format_document
 from langchain_core.runnables import RunnableMap, RunnablePassthrough
+
 # from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 
@@ -69,7 +70,7 @@ _inputs = RunnableMap(
         chat_history=lambda x: _format_chat_history(x["chat_history"])
     )
     | CONDENSE_QUESTION_PROMPT
-    | ChatOllama(model="llama3.1",temperature=0)
+    | ChatOllama(model="llama3.1", temperature=0)
     | StrOutputParser(),
 )
 _context = {
@@ -90,7 +91,11 @@ class ChatHistory(BaseModel):
 
 
 conversational_qa_chain = (
-    _inputs | _context | ANSWER_PROMPT | ChatOllama(model="llama3.1") | StrOutputParser()
+    _inputs
+    | _context
+    | ANSWER_PROMPT
+    | ChatOllama(model="llama3.1")
+    | StrOutputParser()
 )
 chain = conversational_qa_chain.with_types(input_type=ChatHistory)
 

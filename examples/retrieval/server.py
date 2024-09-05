@@ -2,14 +2,14 @@
 """示例LangChain服务器公开了一个检索器。"""
 from fastapi import FastAPI
 from langchain_community.vectorstores import FAISS
+
 # from langchain_openai import OpenAIEmbeddings
 from langchain_ollama import OllamaEmbeddings
 
 from langserve import add_routes
 
 vectorstore = FAISS.from_texts(
-    ["猫喜欢鱼", "狗喜欢棍子"], embedding=OllamaEmbeddings(
-        model="llama3.1")
+    ["猫喜欢鱼", "狗喜欢棍子"], embedding=OllamaEmbeddings(model="llama3.1")
 )
 
 retriever = vectorstore.as_retriever()

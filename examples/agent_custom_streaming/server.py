@@ -37,6 +37,7 @@
    事件来自定义其服务器端输出。
 3. 请参见客户端笔记本，了解 .stream() 的行为！
 """  # noqa: E501
+import os
 from typing import Any, AsyncIterator, List, Literal
 
 from fastapi import FastAPI
@@ -53,8 +54,6 @@ from langchain_openai import ChatOpenAI
 
 from langserve import add_routes
 from langserve.pydantic_v1 import BaseModel
-
-import os
 
 prompt = ChatPromptTemplate.from_messages(
     [
@@ -98,8 +97,8 @@ def favorite_animal(name: str) -> str:
 # llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, streaming=True)
 llm = ChatOpenAI(
     api_key="我的API密钥",
-    base_url="https://我的基准URL/v1",      
-    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+    base_url="https://我的基准URL/v1",
+    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
 )
 
 TOOL_MAPPING = {
@@ -186,8 +185,7 @@ async def custom_stream(input: Input) -> AsyncIterator[str]:
             ):  # 匹配 agent_executor 中的 `.with_config({"run_name": "Agent"})`
                 yield "\n"
                 yield (
-                    f"启动代理: {event['name']} "
-                    f"输入: {event['data'].get('input')}"
+                    f"启动代理: {event['name']} " f"输入: {event['data'].get('input')}"
                 )
                 yield "\n"
         elif kind == "on_chain_end":
@@ -209,17 +207,11 @@ async def custom_stream(input: Input) -> AsyncIterator[str]:
                 yield content
         elif kind == "on_tool_start":
             yield "\n"
-            yield (
-                f"启动工具: {event['name']} "
-                f"输入: {event['data'].get('input')}"
-            )
+            yield (f"启动工具: {event['name']} " f"输入: {event['data'].get('input')}")
             yield "\n"
         elif kind == "on_tool_end":
             yield "\n"
-            yield (
-                f"完成工具: {event['name']} "
-                f"输出: {event['data'].get('output')}"
-            )
+            yield (f"完成工具: {event['name']} " f"输出: {event['data'].get('output')}")
             yield "\n"
 
 

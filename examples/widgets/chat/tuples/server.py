@@ -41,6 +41,7 @@ app.add_middleware(
 # 示例 1：聊天小部件
 # 这展示了如何创建一个聊天小部件。
 
+
 class ChatHistory(CustomUserType):
     chat_history: List[Tuple[str, str]] = Field(
         ...,
@@ -76,6 +77,7 @@ add_routes(
 
 # 示例 2：带历史记录的聊天小部件
 # 这个没有连接到模型。它只是展示了FunctionMessages也可以在游乐场中显示。
+
 
 class ChatHistoryMessage(BaseModel):
     chat_history: List[BaseMessage] = Field(

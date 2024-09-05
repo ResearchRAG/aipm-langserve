@@ -42,6 +42,7 @@ from langchain_core.runnables import (
     RunnableSerializable,
 )
 from langchain_core.vectorstores import VectorStore
+
 # from langchain_openai import OpenAIEmbeddings
 from langchain_ollama import OllamaEmbeddings
 from typing_extensions import Annotated
@@ -244,7 +245,7 @@ _PYDANTIC_MAJOR_VERSION: int = int(PYDANTIC_VERSION.split(".")[0])
 # 然而，当安装pydantic >=2时，事情就有点
 # 更复杂了，因为LangChain使用了pydantic.v1命名空间
 # 但pydantic.v1命名空间不受FastAPI支持。
-# 参见这个问题：https://github.com/tiangolo/fastapi/issues/10360     
+# 参见这个问题：https://github.com/tiangolo/fastapi/issues/10360
 # 所以当使用pydantic >=2时，我们需要使用普通的starlette请求
 # 和响应，我们将没有文档。
 # 或者我们可以为请求和响应创建自定义模型。

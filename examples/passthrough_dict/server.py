@@ -36,12 +36,10 @@ def _create_projection(
     return _project_dict
 
 
-prompt = ChatPromptTemplate.from_messages(
-    [("human", "将 `{thing}` 翻译成 {language}")]
-)
+prompt = ChatPromptTemplate.from_messages([("human", "将 `{thing}` 翻译成 {language}")])
 model = ChatOpenAI(
     api_key="我的API密钥",
-    base_url="https://我的基准URL/v1",      
+    base_url="https://我的基准URL/v1",
     model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
 )
 

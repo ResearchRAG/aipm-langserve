@@ -14,8 +14,8 @@ from langchain_core.runnables import (
     RunnableSerializable,
 )
 from langchain_core.vectorstores import VectorStore
-from langchain_openai import OpenAIEmbeddings
 from langchain_ollama import OllamaEmbeddings
+from langchain_openai import OpenAIEmbeddings
 
 from langserve import add_routes
 from langserve.pydantic_v1 import BaseModel, Field
@@ -24,7 +24,9 @@ vectorstore1 = FAISS.from_texts(
     ["猫咪喜欢鱼", "狗狗喜欢棍子"], embedding=OllamaEmbeddings(model="llama3.1")
 )
 
-vectorstore2 = FAISS.from_texts(["x_n+1=a * xn * (1-xn)"], embedding=OllamaEmbeddings(model="llama3.1"))
+vectorstore2 = FAISS.from_texts(
+    ["x_n+1=a * xn * (1-xn)"], embedding=OllamaEmbeddings(model="llama3.1")
+)
 
 
 app = FastAPI(
@@ -47,9 +49,7 @@ class UnderlyingVectorStore(VectorStore):
         elif self.collection_name == "index2":
             return vectorstore2.as_retriever()
         else:
-            raise NotImplementedError(
-                f"没有为集合 {self.collection_name} 提供检索器"
-            )
+            raise NotImplementedError(f"没有为集合 {self.collection_name} 提供检索器")
 
     def add_texts(
         self,

@@ -75,8 +75,8 @@ def word_length(word: str) -> int:
 # llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, streaming=True)
 llm = ChatOpenAI(
     api_key="我的API密钥",
-    base_url="https://我的基准URL/v1",      
-    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+    base_url="https://我的基准URL/v1",
+    model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
 )
 
 tools = [word_length]

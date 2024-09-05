@@ -11,9 +11,9 @@ add_routes(
     app,
     ChatOpenAI(
         api_key="我的API密钥",
-        base_url="https://我的基准URL/v1",      
-        model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
-        ),
+        base_url="https://我的基准URL/v1",
+        model="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+    ),
     path="/chat_model",
 )
 

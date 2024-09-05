@@ -24,6 +24,7 @@ app = FastAPI(
     description="使用 LangChain 的可运行接口快速搭建一个简单的 API 服务器",
 )
 
+
 # 注意：继承自 CustomUserType 而不是 BaseModel，否则
 # 服务器会将其解码为字典而不是 pydantic 模型。
 class FileProcessingRequest(CustomUserType):

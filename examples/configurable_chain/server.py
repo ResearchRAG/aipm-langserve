@@ -40,9 +40,7 @@ model = ChatOpenAI(temperature=0.5).configurable_alternatives(
     ConfigurableField(
         id="llm",
         name="语言模型",
-        description=(
-            "决定为语言模型使用高还是低的温度参数。"
-        ),
+        description=("决定为语言模型使用高还是低的温度参数。"),
     ),
     high_temp=ChatOpenAI(temperature=0.9),
     low_temp=ChatOpenAI(temperature=0.1),
